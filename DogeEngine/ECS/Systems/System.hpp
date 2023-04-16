@@ -60,7 +60,7 @@ namespace Doge {
          */
         template<int N>
         void fetchArraysLoop(ECSManager *ECS) {
-            typedef typename std::tuple_element<N-1,std::tuple<Component_types...>>::type CurrentType; //Grab the current component type
+            typedef typename std::tuple_element<N,std::tuple<Component_types...>>::type CurrentType; //Grab the current component type
             std::get<N>(vectors) = ECS->template getComponentBuffer<CurrentType>(); //Get pointer to contiguous array
             fetchArraysLoop<N-1>(ECS); //Recurse
         }

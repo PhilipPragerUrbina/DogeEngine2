@@ -109,7 +109,7 @@ namespace Doge {
          * @throws runtime_error Same component can not be added twice to the same entity. If you want to add two eyes, make a list of eyes in a single component and add that. Components should be like traits!
          * @details Best case: O(1) if adding to the most recent entity. Worst case: O(n) if adding to an entity that was created at the beginning.
        */
-        template <typename ComponentType >void addComponent(const Entity& entity, const ComponentType& component){
+        template <typename ComponentType >void addComponent(const Entity& entity, ComponentType component){
             component.setEntity(entity);
             addComponent(component,entity.getID());
         }

@@ -27,7 +27,7 @@ add_custom_target(SHADER_TARGET ALL DEPENDS ${SPV_SHADERS})
 
 
 # Use GLFW, GLM, GLAD and other headers
-include_directories(External/GLFW/include External/glm External/stb External/glad/include External/loaders)
+include_directories(External/GLFW/include External/glm/glm External/stb External/glad/include External/loaders)
 
 #Find sources
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS "DogeEngine/*.hpp" "External/glad/*.c")
