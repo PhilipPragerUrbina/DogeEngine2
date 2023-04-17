@@ -16,7 +16,7 @@ namespace Doge {
      */
     struct RenderData{
         Camera camera;
-        glm::mat4 object_transform;
+        glm::mat4 object_transform{};
     };
 
     /**
@@ -42,7 +42,6 @@ namespace Doge {
          * Get the location of the vertex SPIR-V binary
          */
         virtual std::string getVertexLocation() const { return ""; };
-        //todo some way to represent file paths regardless of working directory. Tie it in with the resource manager.
 
         /**
          * Set the shader uniforms to what they need to be for this specific material instance
@@ -60,9 +59,6 @@ namespace Doge {
          * @param render_data Additional scene information that is useful for most materials. Such as camera and object transforms.
        */
         virtual void setUniforms(const std::shared_ptr<OpenGLShaderProgram>& shader,const RenderData& render_data){}
-
-
-
     };
 
 } // Doge

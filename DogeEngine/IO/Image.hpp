@@ -7,12 +7,14 @@
 #include <string>
 #include <stdexcept>
 #include "InFile.hpp"
+#include "../Data/ResourceData.hpp"
+#include "../Data/ResourceManager.hpp"
 namespace Doge {
 
     /**
-     * Load an image into memory
+     * Load an image into memory from the filesystem
      */
-    class Image {
+    class Image : public ResourceData{
     private:
         int width, height, channels;
         unsigned char* data;
@@ -31,6 +33,14 @@ namespace Doge {
                 throw std::runtime_error("Unable to open image file: " + file.getLocation());
             }
         }
+
+        /**
+         * Autoload image
+         * @param manager Manager to request from
+         * @param id Resource ID to load
+         */
+        Image(ResourceManager* manager, const std::string& id) : Image(manager->requestFile(id, {".hdr", ".png", ".jpg", ".jpeg", ".tga", ".bmp"})){}
+
 
         /**
          * Get the raw image data
@@ -61,7 +71,7 @@ namespace Doge {
             return channels;
         }
 
-        ~Image(){
+        ~Image() override{
             stbi_image_free(data);
         }
 

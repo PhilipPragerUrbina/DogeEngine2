@@ -20,26 +20,9 @@ namespace Doge {
     public:
 
         /**
-         * Search for file recursive in directory
-         * @param directory Directory to search
-         * @param filename Name of file to search for with extension
-         * @return Found file if found
-         */
-        static std::optional<InFile> searchForFile(const  std::filesystem::path& directory, const std::string& filename){
-            if(!is_directory(directory) && directory.filename() == filename){
-                    return {InFile(directory.string())};
-            }
-            for (const std::filesystem::path & child : std::filesystem::directory_iterator(directory)){
-                std::optional<InFile> search = searchForFile(child, filename);
-                if(search) return search;
-            }
-            return {};
-        }
-
-        /**
          * Create a new input file
          * @param filepath Location of input file
-         * Does not read file yet
+         * @warning Does not read file yet
          * @throws runtime_error File could not be found
          */
         InFile(const std::filesystem::path& filepath) : location(filepath) {
@@ -80,7 +63,7 @@ namespace Doge {
             std::vector<char> buffer(file_size);
             //read
             file.seekg(0);
-            file.read(buffer.data(), file_size);
+            file.read(buffer.data(), (std::streamsize)file_size);
             file.close();
             return buffer;
         }

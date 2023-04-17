@@ -13,7 +13,8 @@
   + Multiple rendering pipelines
   + Multi-view rendering
     + Shadows 
-    + Reflections
+    + Reflection probes
+  + Instancing and batching
 + Built in content
   + Shaders
   + Utils
@@ -24,5 +25,7 @@
   + File IO
     + GLTF
   + Automatic Resource de-allocation
++ XPBD physics system
++ Event system
 + ### And much, much more!
   

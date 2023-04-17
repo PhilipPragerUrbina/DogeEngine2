@@ -21,6 +21,11 @@ using namespace Doge;
 
 int main(int argc, char *argv[]){
 
+    OpenGLApplication application("pain",200,200);
+/*
+    ResourceManager rm(std::filesystem::path("./")); //todo defer loading of opengl stuff until opengl is loaded(Should not be a problem once properly integrated into context)
+
+    std::cout << rm.requestResource<OpenGLTexture>("grid_blue")->getTextureID() << "\n";
 
     ECSManager manager;
 
@@ -59,8 +64,7 @@ int main(int argc, char *argv[]){
     std::cout << manager.getComponent<TransformComponent>(planet)->pos << "\n";
     std::cout << manager.getComponent<HierarchyComponent>(dog)->child.getID() << "\n";
     std::cout << manager.getComponent<TransformComponent>(dog)->pos << "\n";
-
-    OpenGLApplication application("pain",200,200);
+*/
     OBJMesh loader(InFile("Models/cow.obj"));
 
     OpenGLMesh mesh (loader.getAttributes(), loader.getIndices());
