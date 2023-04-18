@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include "stb_image.h"
 #include <string>
 #include <stdexcept>
@@ -33,6 +34,15 @@ namespace Doge {
                 throw std::runtime_error("Unable to open image file: " + file.getLocation());
             }
         }
+
+        /**
+         * Create image from raw data
+         */
+        Image(int width, int height, int channels, unsigned char *data) : width(width), height(height),
+                                                                          channels(channels), data(data) {}
+
+
+
 
         /**
          * Autoload image

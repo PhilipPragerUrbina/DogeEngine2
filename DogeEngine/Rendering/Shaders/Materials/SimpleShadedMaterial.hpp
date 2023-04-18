@@ -12,7 +12,7 @@ namespace Doge {
 
     class SimpleShadedMaterial : public Material{
     private:
-        OpenGLTexture albedo_texture;
+        Resource<OpenGLTexture> albedo_texture;
     public:
 
         std::string getFragmentLocation() const override {
@@ -23,7 +23,7 @@ namespace Doge {
             return "CompiledShaders/simple_shaded.vert.spv";
         }
 
-        SimpleShadedMaterial(OpenGLShaderManager* shader_manager,  const Image& albedo_image) : Material(shader_manager, getVertexLocation(), getFragmentLocation()),
+        SimpleShadedMaterial(OpenGLShaderManager* shader_manager,  Resource<OpenGLTexture> albedo_image) : Material(shader_manager, getVertexLocation(), getFragmentLocation()),
                                                                                                 albedo_texture(albedo_image){
 
         }
@@ -40,7 +40,7 @@ namespace Doge {
             shader->setUniform("model", render_data.object_transform);
             shader->setUniform("view", render_data.camera.getTransform());
             shader->setUniform("projection", render_data.camera.getProjection());
-            shader->setTexture("albedo", albedo_texture.getTextureID(),0);
+            shader->setTexture("albedo", albedo_texture->getTextureID(),0);
             shader->setUniform("light_pos", light_pos);
 
         }

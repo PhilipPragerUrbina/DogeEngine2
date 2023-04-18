@@ -40,7 +40,28 @@ namespace Doge {
             throw std::runtime_error("Unable to find file: " + id);
         };
 
-        //todo allow creating a resource directly with a pointer and ID
+
+        /**
+         * Add a resource directly
+         * @details Useful for adding resources that were stored within other resources(eg: a texture within a GLTF scene)
+         * @tparam T Type of resource
+         * @param id Resource ID
+         * @param resource Pointer to resource data. Lifetime will now be managed by this manager.
+         * @throws runtime_exception Unable create resource.
+         * @return Pointer to new resource.
+         */
+        template <class T> Resource<T> addResource(const std::string& id, T* resource){
+            const std::string id_with_type = id + typeid(T).name(); //Make sure multiple things can have the same ID as long as they have different types
+
+            if(data.find(id_with_type) == data.end()){ //Not found
+                ResourceData* resource_data = dynamic_cast<ResourceData*>(resource);
+                if(resource_data == nullptr){ throw std::runtime_error("Resource type must derive ResourceData."); }
+                data[id_with_type] = resource_data;
+                return Resource<T>(resource);
+            } else {
+                throw std::runtime_error("Resource already exists.");
+            }
+        }
 
         /**
        * Get a file to access data from the filesystem.
@@ -66,16 +87,18 @@ namespace Doge {
          * @throws runtime_exception Unable to find or create resource
          */
         template <class T> Resource<T> requestResource(const std::string& id) {
-            if(data.find(id) == data.end()){ //Not found
-                T* new_resource_data = new T(this,id); //Create data and any dependencies if needed
+            const std::string id_with_type = id + typeid(T).name(); //Make sure multiple things can have the same ID as long as they have different types
+
+            if(data.find(id_with_type) == data.end()){ //Not found
+                T* new_resource_data = new T(this, id); //Create data and any dependencies if needed
 
                 ResourceData* resource_data = dynamic_cast<ResourceData*>(new_resource_data);
                 if(resource_data == nullptr){ throw std::runtime_error("Resource type must derive ResourceData."); }
-                data[id] = resource_data;
+                data[id_with_type] = resource_data;
                 return Resource<T>(new_resource_data);
             }
             //Found
-            return Resource<T>((T*)data[id]);
+            return Resource<T>((T*)data[id_with_type]);
         };
 
         ~ResourceManager(){

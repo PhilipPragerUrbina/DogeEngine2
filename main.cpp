@@ -4,27 +4,20 @@
 
 #include "DogeEngine/Rendering/OpenGL/OpenGLApplication.hpp"
 #include "DogeEngine/Rendering/Shaders/Materials/SimpleShadedMaterial.hpp"
-
 #include "DogeEngine/IO/OBJMesh.hpp"
-#include "DogeEngine/ECS/ECSManager.hpp"
-
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "tiny_gltf.h"
-#include "DogeEngine/ECS/Components/TransformComponent.hpp"
-#include "DogeEngine/ECS/Components/HierarchyComponent.hpp"
 #include "DogeEngine/Utils/GLMPrints.hpp"
-#include "DogeEngine/ECS/Systems/PrintTransform.hpp"
+#include "DogeEngine/IO/GLTFScene.hpp"
 
 using namespace Doge;
 
 int main(int argc, char *argv[]){
 
     OpenGLApplication application("pain",200,200);
-/*
-    ResourceManager rm(std::filesystem::path("./")); //todo defer loading of opengl stuff until opengl is loaded(Should not be a problem once properly integrated into context)
 
+    ResourceManager rm(std::filesystem::path("./")); //todo defer loading of opengl stuff until opengl is loaded(Should not be a problem once properly integrated into context)
+    rm.requestResource<GLTFScene>("sanford3");
+
+/*
     std::cout << rm.requestResource<OpenGLTexture>("grid_blue")->getTextureID() << "\n";
 
     ECSManager manager;
@@ -68,11 +61,11 @@ int main(int argc, char *argv[]){
     OBJMesh loader(InFile("Models/cow.obj"));
 
     OpenGLMesh mesh (loader.getAttributes(), loader.getIndices());
-    SimpleShadedMaterial material = SimpleShadedMaterial(application.getShaderManager(), Image(InFile("Images/grid_blue.png")));
+    SimpleShadedMaterial material = SimpleShadedMaterial(application.getShaderManager(), rm.requestResource<OpenGLTexture>("grid_blue"));
 
     OBJMesh loader_2(InFile("Models/cube.obj"), false);
-    OpenGLMesh mesh_2 (loader_2.getAttributes(), loader_2.getIndices());
-    SimpleShadedMaterial material_2 = SimpleShadedMaterial(application.getShaderManager(), Image(InFile("Images/grid_orange.png")));
+    Resource<OpenGLMesh> mesh_2 = rm.requestResource<OpenGLMesh>("sanford3/Mesh.001/1");
+    SimpleShadedMaterial material_2 = SimpleShadedMaterial(application.getShaderManager(), rm.requestResource<OpenGLTexture>("grid_orange"));
 
     application.setActiveCamera(Camera({50.0f,50.0f,50.0f}, {0.0f,0.0f,0.0f}, {0.0f,0.0f,1.0f}, 4.0/3.0));
 
@@ -99,7 +92,7 @@ int main(int argc, char *argv[]){
             mat = glm::rotate(mat, (float)time / 100.0f, {((float)rand() / RAND_MAX),((float)rand() / RAND_MAX),((float)rand() / RAND_MAX)});
             mat = glm::scale(mat,{2,2,2});
 
-            application.draw(&mesh_2, &material_2,mat );
+            application.draw(mesh_2.operator->(), &material_2,mat );
         }
 time++;
         //todo read: https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation

@@ -8,13 +8,16 @@
 #include <stdexcept>
 #include "glm.hpp"
 #include "../API/VertexAttributes.hpp"
+#include "../../Data/ResourceData.hpp"
+#include "../../Data/ResourceManager.hpp"
 
 namespace Doge {
 
+    //todo separate mesh and opengl mesh. At least think it over. Image->texture.
     /**
      * A standard mesh
      */
-    class OpenGLMesh {
+    class OpenGLMesh : public ResourceData{
     private:
         std::vector<VertexAttributes> vertices;
         std::vector<unsigned int> indices;
@@ -70,6 +73,16 @@ namespace Doge {
         OpenGLMesh(const std::vector<VertexAttributes>&  vertices, const std::vector<unsigned int>& indices) : vertices(vertices), indices(indices){
             loadMesh();
         };
+
+        /**
+       * Autoload texture
+       * @param manager Manager to request image from
+       * @param ID Resource ID
+       */
+        OpenGLMesh(ResourceManager* manager, const std::string& ID) {
+            throw std::runtime_error("Unable to find mesh: " + ID + ". Check that the requested resource ID is spelled correctly.");
+        }
+        //todo create autoload
 
 
         /**
