@@ -8,13 +8,15 @@
 #include <fstream>
 #include <glm.hpp>
 #include "../../IO/InFile.hpp"
+#include "../../Data/ResourceData.hpp"
+#include "../../Data/ResourceManager.hpp"
 
 namespace Doge {
 
     /**
      * Contains vertex and fragment shaders in a shader program
      */
-    class OpenGLShaderProgram {
+    class OpenGLShaderProgram : public ResourceData{
     private:
         unsigned int program_id;
 
@@ -23,6 +25,14 @@ namespace Doge {
         std::string  fragment_location;
 
     public:
+
+        /**
+       * Autoload shader program
+       * @param manager Manager to request image from
+       * @param ID Resource ID.
+         * @details Expects two binary shader files. Both with same stem, one .vert.spv, other .frag.spv.
+       */
+        OpenGLShaderProgram(ResourceManager* manager, const std::string& ID) : OpenGLShaderProgram(manager->requestFile(ID, {".vert.spv"}),manager->requestFile(ID, {".frag.spv"}) ){}
 
         /**
          * Create a shader program from shader binaries
@@ -81,17 +91,6 @@ namespace Doge {
             //todo Create a shader class that goes within the program class to allow for less redundancy and greater flexibility(more similar to vulkan, constants,deferred binding, etc)
         }
 
-
-        /**
-         * Check if the files are the same as the files that created this shader program
-         * @param other_vertex_location Vertex binary location
-         * @param other_fragment_location Fragment binary location
-         * @return True if same
-         */
-        bool isSame(const std::string& other_vertex_location, const std::string& other_fragment_location) const {
-            return other_fragment_location == fragment_location && other_vertex_location == vertex_location;
-        }
-
         /**
          * Set the program as the currently active shader program
          */
@@ -105,8 +104,8 @@ namespace Doge {
          * @param name Name of UBO in shader
          * @param binding_point Location of UBO
          */
-        void bindUBO(const std::string& name , unsigned int binding_point) const {
-            unsigned int index= glGetUniformBlockIndex(program_id, name.c_str());
+        void bindUBO(const char* name , unsigned int binding_point) const {
+            unsigned int index= glGetUniformBlockIndex(program_id, name);
             glUniformBlockBinding(program_id, index, binding_point);
         }
 
@@ -116,7 +115,7 @@ namespace Doge {
          * @param texture_id The texture to bind
          * @param texture_count Starts at 0, and should be incremented for every additional texture that is set. For example, albedo:0, roughness:1, normal:2,etc.
          */
-        void setTexture(const std::string& texture_name, unsigned int texture_id, int texture_unit) const {
+        void setTexture(const char* texture_name, unsigned int texture_id, int texture_unit) const {
             glActiveTexture(GL_TEXTURE0 + texture_unit);
             glBindTexture(GL_TEXTURE_2D, texture_id);
             setUniform(texture_name, texture_unit);
@@ -124,43 +123,64 @@ namespace Doge {
 
         //Shader uniform methods. Set shader uniforms of name to a value
 
-        void setUniform(const std::string& name, bool value) const{
-            glUniform1i(glGetUniformLocation(program_id, name.c_str()), (int)value);
+        void setUniform(const char* name, bool value) const{
+            glUniform1i(glGetUniformLocation(program_id, name), (int)value);
         }
 
-        void setUniform(const std::string& name, int value) const{
-            glUniform1i(glGetUniformLocation(program_id, name.c_str()), value);
+        void setUniform(const char* name, int value) const{
+            glUniform1i(glGetUniformLocation(program_id, name), value);
         }
 
-        void setUniform(const std::string& name, float value) const{
-            glUniform1f(glGetUniformLocation(program_id, name.c_str()), value);
+        void setUniform(const char* name, float value) const{
+            glUniform1f(glGetUniformLocation(program_id, name), value);
         }
 
-        void setUniform(const std::string& name, const glm::vec2& value) const{
-            glUniform2fv(glGetUniformLocation(program_id, name.c_str()), 1, &value[0]);
+        void setUniform(const char* name, const glm::vec2& value) const{
+            glUniform2fv(glGetUniformLocation(program_id, name), 1, &value[0]);
         }
 
-        void setUniform(const std::string& name, const glm::vec3& value) const{
-            glUniform3fv(glGetUniformLocation(program_id, name.c_str()), 1, &value[0]);
+        void setUniform(const char* name, const glm::vec3& value) const{
+            glUniform3fv(glGetUniformLocation(program_id, name), 1, &value[0]);
         }
 
-        void setUniform(const std::string& name, const glm::vec4& value) const{
-            glUniform4fv(glGetUniformLocation(program_id, name.c_str()), 1, &value[0]);
+        void setUniform(const char* name, const glm::vec4& value) const{
+            glUniform4fv(glGetUniformLocation(program_id, name), 1, &value[0]);
         }
 
-        void setUniform(const std::string &name, const glm::mat2& value) const
+        void setUniform(const char* name, const glm::mat2& value) const
         {
-            glUniformMatrix2fv(glGetUniformLocation(program_id, name.c_str()), 1, GL_FALSE, &value[0][0]);
+            glUniformMatrix2fv(glGetUniformLocation(program_id, name), 1, GL_FALSE, &value[0][0]);
         }
 
-        void setUniform(const std::string &name, const glm::mat3& value) const
+        void setUniform(const char* name, const glm::mat3& value) const
         {
-            glUniformMatrix3fv(glGetUniformLocation(program_id, name.c_str()), 1, GL_FALSE, &value[0][0]);
+            glUniformMatrix3fv(glGetUniformLocation(program_id, name), 1, GL_FALSE, &value[0][0]);
         }
 
-        void setUniform(const std::string &name, const glm::mat4& value) const
+        void setUniform(const char* name, const glm::mat4& value) const
         {
-            glUniformMatrix4fv(glGetUniformLocation(program_id, name.c_str()), 1, GL_FALSE, &value[0][0]);
+            glUniformMatrix4fv(glGetUniformLocation(program_id, name), 1, GL_FALSE, &value[0][0]);
+        }
+
+        /**
+        * Compare the program ID from a resource
+        */
+        bool isSame(Resource<OpenGLShaderProgram> rhs) const {
+            return program_id == rhs->program_id;
+        }
+
+        /**
+         * Compare program ID
+         */
+        bool operator==(const OpenGLShaderProgram &rhs) const {
+            return program_id == rhs.program_id;
+        }
+
+        /**
+         * Get the program ID
+         */
+        unsigned int getProgramID() const {
+            return program_id;
         }
 
         ~OpenGLShaderProgram(){

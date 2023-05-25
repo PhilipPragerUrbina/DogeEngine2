@@ -8,14 +8,14 @@ layout(location = 0) out vec4 FragColor;
 
 layout(location = 5) uniform vec3 light_pos;
 
- uniform sampler2D albedo;
+layout(location = 6) uniform vec3 color;
 
 void main() {
 
 
     vec3 lightColor = vec3(1,1,1);
     vec3 ambient = vec3(0.1,0.1,0.1);
-    vec3 object_color = texture(albedo, tex_coord).rgb;
+    vec3 object_color = color;
 
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(light_pos - pos);

@@ -19,6 +19,7 @@ namespace Doge {
     private:
         int width, height, channels;
         unsigned char* data;
+        bool stb = true;
     public:
 
         /**
@@ -39,7 +40,7 @@ namespace Doge {
          * Create image from raw data
          */
         Image(int width, int height, int channels, unsigned char *data) : width(width), height(height),
-                                                                          channels(channels), data(data) {}
+                                                                          channels(channels), data(data) , stb(false){}
 
 
 
@@ -82,7 +83,11 @@ namespace Doge {
         }
 
         ~Image() override{
-            stbi_image_free(data);
+            if(stb){
+                stbi_image_free(data);//todo separate out loaders from data
+            }else{
+                delete[] data;
+            }
         }
 
     };

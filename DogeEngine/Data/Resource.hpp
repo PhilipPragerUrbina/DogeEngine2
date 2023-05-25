@@ -22,6 +22,14 @@ namespace Doge {
         explicit Resource(T* resource_data) : raw_resource(resource_data){}
 
     public:
+
+        /**
+         * Operator passthrough for hashing
+         */
+        bool operator==(const Resource &rhs) const {
+            return *raw_resource == *rhs.raw_resource;
+        }
+
         /**
          * Access the resource data
          */

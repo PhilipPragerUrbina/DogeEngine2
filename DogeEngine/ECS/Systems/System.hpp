@@ -11,7 +11,8 @@ namespace Doge {
 
     /**
      * Applies operations on entities with specific combination of components
-     * @tparam Component_types Required components.
+     * @tparam Component_types Required components in order.
+     * @example Access components in process(). Call run() when process should be called for each entity
      * @details Tries to make memory as contiguous as possible for best cache performance.
      */
     template<typename... Component_types>
@@ -29,12 +30,12 @@ namespace Doge {
         template<int N,typename... T>
         void collectComponentsLoop(int entity_id, T&... stuff) {
             int idx = entity_id; //Start in array position corresponding to entity index
-            if(idx > std::get<N>(vectors)->size()) idx = std::get<N>(vectors)->size()-1; //Make sure not out of bounds
+            if(idx >= std::get<N>(vectors)->size()) idx = std::get<N>(vectors)->size()-1; //Make sure not out of bounds
 
             //Search backwards for the component with the requested entity
-            while (entity_id <= std::get<N>(vectors)->at(idx).getEntity().getID() ){ //components are sorted by entity id
-                if(entity_id == std::get<N>(vectors)->at(idx).getEntity().getID() ){ //Found component
-                    collectComponentsLoop<N - 1>(entity_id, std::get<N>(vectors)->at(idx), stuff...); //Add to params and move one
+            while (idx > -1 && entity_id <= std::get<N>(vectors)->operator[](idx).getEntity().getID() ){ //components are sorted by entity id
+                if(entity_id == std::get<N>(vectors)->operator[](idx).getEntity().getID() ){ //Found component
+                    collectComponentsLoop<N - 1>(entity_id, std::get<N>(vectors)->operator[](idx), stuff...); //Add to params and move one
                     return ;
                 }
                 idx--;
@@ -49,44 +50,59 @@ namespace Doge {
          * @tparam T Components collected so far. Now matches Component_types.
          * @param stuff Components collected so far as arguments.
          */
-        template<int N,typename... T> void collectComponentsLoop (int entity_id , Component_types&... stuff) {
+        template<int N,typename... T> void collectComponentsLoop ( int entity_id , Component_types&... stuff) {
             process(stuff...);
         }
 
         /**
          * Recursive metaprogramming loop. Get pointers to all the needed component arrays.
          * @tparam N Loop index.
-         * @param ECS Where to get components from.
          */
         template<int N>
-        void fetchArraysLoop(ECSManager *ECS) {
+        void fetchArraysLoop() {
             typedef typename std::tuple_element<N,std::tuple<Component_types...>>::type CurrentType; //Grab the current component type
-            std::get<N>(vectors) = ECS->template getComponentBuffer<CurrentType>(); //Get pointer to contiguous array
-            fetchArraysLoop<N-1>(ECS); //Recurse
+            std::vector<CurrentType>* vector = ECS_manager->template getComponentBuffer<CurrentType>();
+            if(vector != nullptr){
+                std::get<N>(vectors) = vector; //Get pointer to contiguous array
+            }
+            fetchArraysLoop<N-1>(); //Recurse
         }
 
         /**
          * End of loop iteration. Achieved through template specialization.
          */
-        template<>void fetchArraysLoop<-1>(ECSManager *ECS) {}
+        template<>void fetchArraysLoop<-1>() {}
     protected:
-        //todo allow multiple operations that run at different times.(eg. setup, every frame, etc)
-        virtual void process(Component_types&...){} //Operation performed on entities
-    public:
 
         /**
-         * Run the system on all available entities with the correct components
-         * @param ECS The manager that contains the components/entities
+         * Will iterate over each entity on run(). Use this to modify or gather information on entities.
          */
-        void run(ECSManager *ECS) {
-            fetchArraysLoop<sizeof...(Component_types)-1>(ECS); //Get pointers to required arrays
+        virtual void process(Component_types&...){}
 
+        /**
+         * The Entity component system manager
+         * Use this to get additional components, or to add new components,etc.
+         */
+        ECSManager* ECS_manager;
+
+        /**
+        * Run the system on all available entities with the correct components
+         * Every time this is called, all matching entities will be run through the process method.
+        */
+        void run() {
+            fetchArraysLoop<sizeof...(Component_types)-1>(); //Get pointers to required arrays
             //Loop through one of the component arrays
             for (int i = 0; i < std::get<0>(vectors)->size(); ++i) {
                 int first_id = std::get<0>(vectors)->at(i).getEntity().getID();
                 collectComponentsLoop<sizeof...(Component_types)-1>(first_id);
-                //todo check cache locality. Make some stuff inline.
             }
         }
+    public:
+        /**
+         * Create a new system to iterate over an ECS
+         * @param ECS_manager The manager that contains the components/entities
+         */
+        explicit System(ECSManager* ECS_manager) : ECS_manager(ECS_manager){}
+
     }; // Doge
 }

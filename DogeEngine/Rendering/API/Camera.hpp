@@ -21,7 +21,7 @@ namespace Doge {
 
         Camera(const glm::vec3& position, const glm::vec3& look_at, const glm::vec3& up = {0.0f,0.0f,1.0f}, float aspect_ratio = 1, float fov_degrees = 90) {
             transform = glm::lookAt(position, look_at, up);
-            projection = glm::perspective(glm::radians(fov_degrees), aspect_ratio, 0.1f, 1000.0f);
+            projection = glm::perspective(glm::radians(fov_degrees), aspect_ratio, 0.1f, 100000.0f);
         }
 
         //todo document and add helper methods. Very barebone right now.

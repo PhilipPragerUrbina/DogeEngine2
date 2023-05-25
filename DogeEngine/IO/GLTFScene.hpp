@@ -14,13 +14,21 @@
 #include "../Data/ResourceManager.hpp"
 #include "../Rendering/OpenGL/OpenGLMesh.hpp"
 #include "../Rendering/OpenGL/OpenGLTexture.hpp"
-
+#include "../ECS/ECSManager.hpp"
+#include "../Rendering/Shaders/Materials/GLTFMaterial.hpp"
+#include "../ECS/Components/TransformComponent.hpp"
+#include "../ECS/Components/HierarchyComponent.hpp"
+#include "../ECS/Components/RenderComponent.hpp"
+#include <gtx/quaternion.hpp>
+#include <gtc/type_ptr.hpp>
 #include <iostream>
 namespace Doge {
 
     class GLTFScene : public ResourceData{
     public:
 
+        tinygltf::Model gltf_model;
+        std::string ID;
 
         /**
          * Autoload GLTF scene
@@ -31,7 +39,7 @@ namespace Doge {
         GLTFScene(ResourceManager* manager, const std::string& id) {
             InFile file = manager->requestFile(id, {".glb", ".gltf"});
 
-            tinygltf::Model gltf_model;
+           ID = id;
             tinygltf::TinyGLTF loader;
 
             std::string error;
@@ -49,15 +57,32 @@ namespace Doge {
 
             //Add image data
             //Can be requested later as a texture
-            //Format for image ID is sceneid/texturename
+            //Format for image ID is sceneid/textureidx
+            int tex_idx = 0;
             for(const auto& texture : gltf_model.textures){
-                unsigned char* data = gltf_model.images[texture.source].image.data();
+                unsigned char* data = gltf_model.images[texture.source].image.data(); //todo ownershup here is wierd
                 int width = gltf_model.images[texture.source].width;
                 int height = gltf_model.images[texture.source].height;
                 int channels = gltf_model.images[texture.source].component;
                 Image* image = new Image(width,height,channels,data);
-                manager->addResource(id + "/" + texture.name, image);
+                manager->addResource(id + "/" + std::to_string(tex_idx), image);
+                tex_idx++;
             }
+
+            int mat_id = 0;
+            for(const auto& material : gltf_model.materials){
+                if(material.pbrMetallicRoughness.baseColorTexture.index < 0){
+                    glm::vec3 color = {material.pbrMetallicRoughness.baseColorFactor[0],
+                                       material.pbrMetallicRoughness.baseColorFactor[1],
+                                       material.pbrMetallicRoughness.baseColorFactor[2]};
+                    manager->addResource(ID + "/" +  std::to_string(mat_id), (Material*)new SimpleShadedMaterial( manager, color));
+                }else{
+                    Resource<OpenGLTexture> color = manager->requestResource<OpenGLTexture>(ID + "/" +  std::to_string(material.pbrMetallicRoughness.baseColorTexture.index));
+                    manager->addResource(ID + "/" +  std::to_string(mat_id), (Material*)new GLTFMaterial( manager, color));
+                }
+                mat_id++;
+            }
+
             //Add mesh data
             //Format for mesh id is sceneid/meshname/primitiveindex
             for(const auto& mesh : gltf_model.meshes) {
@@ -114,8 +139,78 @@ namespace Doge {
                 }
             }
 
-            //Add material data
-            for(const auto& mesh : gltf_model.meshes) {
+        }
+
+        /**
+           * Generate the scene as components
+           */
+        void create(ECSManager* manager, ResourceManager* rc, Entity parent){ //todo combine shader manager into resource manager
+            //todo parent option
+
+            for (int node : gltf_model.scenes[gltf_model.defaultScene].nodes) {
+                Entity child = recurse(manager,rc, gltf_model.nodes[node], parent);
+                HierarchyComponent* parent_h = manager->getComponent<HierarchyComponent>(parent);
+              parent_h->addChild( child );
+            }
+
+        }
+
+        Entity recurse(ECSManager* manager, ResourceManager* rc,const tinygltf::Node& current_node,const Entity& parent){
+            Entity current_entity = manager->createEntity();
+            if(!current_node.matrix.empty()) {
+                manager->addComponent(current_entity, TransformComponent(glm::make_mat4(current_node.matrix.data())));;
+            }else{
+                glm::mat4 TRS(1.0f);
+                if(!current_node.translation.empty()){
+                    TRS = glm::translate(TRS, {current_node.translation[0], current_node.translation[1],current_node.translation[2]});
+                }
+                if(!current_node.rotation.empty()){
+                    TRS = TRS * glm::toMat4(glm::quat(current_node.rotation[0], current_node.rotation[1],current_node.rotation[2],current_node.rotation[3] ));
+                }
+                if(!current_node.scale.empty()){
+                    TRS = glm::scale(TRS, {current_node.scale[0], current_node.scale[1],current_node.scale[2]});
+                }
+
+
+                manager->addComponent(current_entity,  TransformComponent(TRS));;
+            }
+
+
+            HierarchyComponent   hierarchy_component;
+            hierarchy_component = HierarchyComponent(parent);
+
+
+
+
+            for (int child : current_node.children) {
+               hierarchy_component.addChild(recurse(manager,rc, gltf_model.nodes[child], current_entity));
+            }
+            generateMesh(manager,rc,&hierarchy_component,current_node,current_entity);
+            manager->addComponent(current_entity, hierarchy_component);
+            return current_entity;
+        }
+
+        void generateMesh( ECSManager* manager, ResourceManager* rc, HierarchyComponent* parent_hierarchy, const tinygltf::Node& node, Entity parent){
+            if(node.mesh < 0){
+                return;
+            }
+            for (int i = 0; i < gltf_model.meshes[node.mesh].primitives.size(); ++i) {
+                Resource<OpenGLMesh> mesh = rc->requestResource<OpenGLMesh>(ID + "/" + gltf_model.meshes[node.mesh].name + "/" + std::to_string(i));
+
+
+
+
+                Entity child = manager->createEntity();
+
+
+                //todo proper sub resource support. No mor '/'
+                    manager->addComponent(child, RenderComponent(mesh, rc->requestResource<Material>(ID + "/" + std::to_string(gltf_model.meshes[node.mesh].primitives[i].material))));
+
+
+
+                parent_hierarchy->addChild(child);
+                manager->addComponent(child, HierarchyComponent(parent)); //todo auto set parent on child add
+                manager->addComponent(child, TransformComponent(glm::mat4(1.0f)));
 
 
             }

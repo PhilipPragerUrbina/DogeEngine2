@@ -7,9 +7,12 @@
 #include <glm.hpp>
 #include "../UI/WindowApplication.hpp"
 #include "../API/DrawRequest.hpp"
-
+#include "../../../Deprecated/OpenGLShaderManager.hpp"
+#include <unordered_set>
 
 namespace Doge {
+
+    auto shader_hash = [](const Resource<OpenGLShaderProgram>& a) { return a->getProgramID(); }; //For making set unique though the resource pointer
 
     /**
      * Manages everything related to opengl
@@ -21,7 +24,9 @@ namespace Doge {
 
         std::vector<DrawRequest> render_queue;
 
-        OpenGLShaderManager manager;
+
+        std::unordered_set<Resource<OpenGLShaderProgram>, decltype(shader_hash)> shaders{10,shader_hash}; //Unique list of shader programs
+
 
         RenderData active_render_data;
 
@@ -31,14 +36,13 @@ namespace Doge {
          * Render a frame
          */
         void render(){
-            for(std::shared_ptr<OpenGLShaderProgram> shader : manager.getPrograms() ){
+            for(Resource<OpenGLShaderProgram> shader : shaders ){
                 shader->use();
                 for (const DrawRequest& draw_call : render_queue) {
-                    if(shader->isSame(draw_call.getMaterial()->getVertexLocation(), draw_call.getMaterial()->getFragmentLocation())){
+                    if(shader->isSame(draw_call.getMaterial()->getShaderProgram())){
                         active_render_data.object_transform = draw_call.getTransform();
                         draw_call.getMaterial()->setUniforms(active_render_data);
                         draw_call.getMesh()->render();
-                        //todo not reset uniforms if same material
                     }
                 }
             }
@@ -103,15 +107,10 @@ namespace Doge {
          * @param transform The transform of the object to draw
          */
         void draw(OpenGLMesh* mesh, Material* material, const glm::mat4& transform){
+            shaders.insert(material->getShaderProgram()); //Build unique list of shaders
             render_queue.emplace_back(mesh,material,transform);
         }
 
-        /**
-         * Get teh shader manager in order to create materials
-         */
-        OpenGLShaderManager* getShaderManager(){
-            return &manager;
-        }
 
         /**
          * Set the background color

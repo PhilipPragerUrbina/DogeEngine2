@@ -3,8 +3,11 @@
 //
 
 #pragma once
-#include "../OpenGL/OpenGLShaderManager.hpp"
+
 #include "Camera.hpp"
+#include "../../Data/ResourceData.hpp"
+#include "../../Data/ResourceManager.hpp"
+#include "../OpenGL/OpenGLShaderProgram.hpp"
 
 namespace Doge {
 
@@ -25,23 +28,23 @@ namespace Doge {
      * @example A metal material would be linked with a shader that has a roughness uniform. Then you can create a copper and aluminium instance of the metal material with different roughness values.
      * @warning This is an interface, make sure to implement all methods for your specific material type
      */
-    class Material {
+    class Material : public ResourceData{
     private:
-        std::shared_ptr<OpenGLShaderProgram> shader_program; //Private because it should only be accessed during setUniforms()
+        Resource<OpenGLShaderProgram> shader_program; //Private because it should only be accessed during setUniforms()
     public:
-        Material(OpenGLShaderManager* manager, const std::string& vertex_location, const std::string& fragment_location){
-            shader_program = manager->getShaderProgram(vertex_location,fragment_location);
+        Material(ResourceManager* manager, const std::string& shader_stem) : shader_program(manager->requestResource<OpenGLShaderProgram>(shader_stem)){}
+
+
+        Resource<OpenGLShaderProgram> getShaderProgram() const {
+            return shader_program;
         }
 
+       /**
+        * Get the file stem of the spir-V binaries making up this material shader
+        * @details The resource directories will be searched for the corresponding .vert.spv and .frag.spv with this stem
+        */
+        virtual std::string getShaderName() const { return ""; };
 
-        /**
-         * Get the location of the fragment SPIR-V binary
-         */
-        virtual std::string getFragmentLocation() const { return ""; };
-        /**
-         * Get the location of the vertex SPIR-V binary
-         */
-        virtual std::string getVertexLocation() const { return ""; };
 
         /**
          * Set the shader uniforms to what they need to be for this specific material instance
@@ -58,7 +61,7 @@ namespace Doge {
        * @param shader Use this to set uniforms
          * @param render_data Additional scene information that is useful for most materials. Such as camera and object transforms.
        */
-        virtual void setUniforms(const std::shared_ptr<OpenGLShaderProgram>& shader,const RenderData& render_data){}
+        virtual void setUniforms(const Resource<OpenGLShaderProgram>& shader,const RenderData& render_data){}
     };
 
 } // Doge

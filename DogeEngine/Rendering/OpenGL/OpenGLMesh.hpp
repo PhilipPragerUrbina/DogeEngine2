@@ -75,7 +75,7 @@ namespace Doge {
         };
 
         /**
-       * Autoload texture
+       * Autoload mesh
        * @param manager Manager to request image from
        * @param ID Resource ID
        */
