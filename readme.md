@@ -1,31 +1,23 @@
  # DogeEngine 2
- WIP game framework
+ Unfinished second iteration.
  
-## Planned features:
+## Features:
 + Entity Component system
   + Similar to Unity
   + Cache friendly
-  + Powerful multiplayer networking
-  + Multi-threading
+  + Crazy template magic
 + Intuitive API
   + Material system
 + OpenGL rendering
   + Multiple rendering pipelines
-  + Multi-view rendering
-    + Shadows 
-    + Reflection probes
   + Instancing and batching
 + Built in content
   + Shaders
   + Utils
     + Camera systems
-    + Planet scale systems
 + Resource management
   + Shared resources
   + File IO
     + GLTF
   + Automatic Resource de-allocation
-+ XPBD physics system
-+ Event system
-+ ### And much, much more!
-  
+  ![Capturecowsinavoid](https://github.com/PhilipPragerUrbina/DogeEngine2/assets/72355251/253cc344-a464-43c2-a2a7-0ed5b348bd56)
